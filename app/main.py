@@ -21,13 +21,35 @@ def root():
 @app.get("/price/{symbol}")
 def get_price(symbol: str):
     ticker = yf.Ticker(symbol)
-    info = ticker.info
-    return {
-        "symbol": symbol,
-        "price": info.get("regularMarketPrice"),
-        "currency": info.get("currency"),
-        "name": info.get("shortName")
-    }
+
+    # Try fast_info first (no JSON decoding)
+    try:
+        fi = ticker.fast_info
+        return {
+            "symbol": symbol,
+            "price": fi.get("last_price"),
+            "currency": fi.get("currency"),
+            "name": ticker.get_info().get("shortName")  # safe fallback
+        }
+    except Exception:
+        pass
+
+    # Fallback to get_info() safely
+    try:
+        info = ticker.get_info()
+        return {
+            "symbol": symbol,
+            "price": info.get("regularMarketPrice"),
+            "currency": info.get("currency"),
+            "name": info.get("shortName")
+        }
+    except Exception as e:
+        return {
+            "symbol": symbol,
+            "error": "Could not fetch price data",
+            "details": str(e)
+        }
+
 
 @app.get("/history/{symbol}")
 def get_history(symbol: str, period: str = "1mo", interval: str = "1d"):

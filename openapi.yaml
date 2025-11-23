@@ -6,22 +6,40 @@ info:
     A simple API wrapper around the Python yfinance library.
     Includes endpoints for price, history, news, and sentiment analysis.
 
+servers:
+  - url: https://yfinance-fastapi-service.onrender.com
+    description: Render deployment base URL
+
 paths:
 
   /:
     get:
       summary: Health check
+      description: Returns API status.
       responses:
         '200':
-          description: API status
+          description: API status response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: YFinance API running on Render
 
   /price/{symbol}:
     get:
       summary: Get current price for a ticker
+      description: Returns current market price, currency, and company name.
       parameters:
         - name: symbol
           in: path
           required: true
+          description: Stock ticker symbol
           schema:
             type: string
             example: AAPL
@@ -32,35 +50,75 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  symbol:
+                    type: string
+                    example: AAPL
+                  price:
+                    type: number
+                    example: 193.36
+                  currency:
+                    type: string
+                    example: USD
+                  name:
+                    type: string
+                    example: Apple Inc.
 
   /history/{symbol}:
     get:
       summary: Get historical OHLC data
+      description: Returns historical daily/hourly OHLC data.
       parameters:
         - name: symbol
           in: path
           required: true
+          schema:
+            type: string
+            example: MSFT
         - name: period
           in: query
+          required: false
           schema:
             type: string
             default: 1mo
+            example: 6mo
+          description: Time period (e.g., 1d, 5d, 1mo, 6mo, 1y, max)
         - name: interval
           in: query
+          required: false
           schema:
             type: string
             default: 1d
+            example: 1h
+          description: Data interval (e.g., 1m, 15m, 1h, 1d)
       responses:
         '200':
-          description: Historical data
+          description: Historical OHLC data
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  Open:
+                    "2024-01-01": 150.0
+                  Close:
+                    "2024-01-01": 153.2
+                  High:
+                    "2024-01-01": 154.1
+                  Low:
+                    "2024-01-01": 149.3
 
   /news/{symbol}:
     get:
       summary: Get news for a ticker
+      description: Returns list of recent news articles related to the ticker.
       parameters:
         - name: symbol
           in: path
           required: true
+          schema:
+            type: string
+            example: TSLA
       responses:
         '200':
           description: List of news articles
@@ -70,6 +128,17 @@ paths:
                 type: array
                 items:
                   type: object
+                  properties:
+                    title:
+                      type: string
+                    publisher:
+                      type: string
+                    link:
+                      type: string
+                    summary:
+                      type: string
+                    providerPublishTime:
+                      type: integer
 
   /sentiment/{symbol}:
     get:
@@ -79,10 +148,52 @@ paths:
         - name: symbol
           in: path
           required: true
+          schema:
+            type: string
+            example: NVDA
       responses:
         '200':
-          description: Sentiment scores
+          description: Sentiment scores for each article
           content:
             application/json:
               schema:
                 type: object
+                properties:
+                  symbol:
+                    type: string
+                    example: TSLA
+                  overall_sentiment:
+                    type: string
+                    enum: [positive, neutral, negative]
+                    example: positive
+                  compound_score:
+                    type: number
+                    example: 0.43
+                  articles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        publisher:
+                          type: string
+                        link:
+                          type: string
+                        summary:
+                          type: string
+                        sentiment:
+                          type: object
+                          properties:
+                            neg:
+                              type: number
+                              example: 0.0
+                            neu:
+                              type: number
+                              example: 0.65
+                            pos:
+                              type: number
+                              example: 0.35
+                            compound:
+                              type: number
+                              example: 0.92
