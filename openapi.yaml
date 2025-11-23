@@ -1,0 +1,99 @@
+openapi: 3.0.1
+info:
+  title: YFinance API Backend
+  version: 1.0.0
+  description: |
+    A simple API wrapper around the Python yfinance library.
+    Provides stock price, historical data, and news endpoints.
+
+servers:
+  - url: https://yfinance-fastapi-service.onrender.com
+    description: Render deployment base URL
+
+paths:
+
+  /price/{symbol}:
+    get:
+      summary: Get current market price for a ticker
+      description: Returns the current market price, currency, and company name.
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: AAPL
+      responses:
+        '200':
+          description: Price information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                    example: AAPL
+                  price:
+                    type: number
+                    example: 193.36
+                  currency:
+                    type: string
+                    example: USD
+                  name:
+                    type: string
+                    example: Apple Inc.
+
+  /history/{symbol}:
+    get:
+      summary: Get historical OHLC data for a ticker
+      description: Returns historical price data for the specified symbol.
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: MSFT
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            default: 1mo
+            example: 1mo
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: string
+            default: 1d
+            example: 1d
+      responses:
+        '200':
+          description: Historical price data
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /news/{symbol}:
+    get:
+      summary: Get news articles for a ticker
+      description: Returns recent news for the stock symbol.
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: TSLA
+      responses:
+        '200':
+          description: List of news articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object

@@ -1,7 +1,15 @@
 from fastapi import FastAPI
 import yfinance as yf
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import nltk
+
+# Download VADER lexicon (only runs the first time)
+nltk.download("vader_lexicon")
 
 app = FastAPI()
+
+# Initialize sentiment analyzer
+sia = SentimentIntensityAnalyzer()
 
 @app.get("/")
 def root():
@@ -27,4 +35,22 @@ def get_history(symbol: str, period: str = "1mo", interval: str = "1d"):
 @app.get("/news/{symbol}")
 def get_news(symbol: str):
     ticker = yf.Ticker(symbol)
-    return ticker.news
+    raw_news = ticker.news
+
+    enriched_news = []
+    for article in raw_news:
+        title = article.get("title", "")
+        summary = article.get("summary", "")
+
+        # Combine title + summary for stronger signal
+        text = f"{title}. {summary}"
+
+        # Sentiment analysis
+        sentiment = sia.polarity_scores(text)
+
+        enriched_news.append({
+            **article,
+            "sentiment": sentiment
+        })
+
+    return enriched_news
